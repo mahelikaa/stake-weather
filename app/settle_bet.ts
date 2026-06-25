@@ -29,7 +29,12 @@ async function main() {
     const program = new Program<StakeWeather>(idl, provider);
 
     const programId = new PublicKey("Asn5AeENGV3LMtZKjf3sWectSeFKif2Ea5FZD3E8Lxc5");
-    const oracleQuote = new PublicKey("2X3Qp3wDjFVV9mjtvBgCavGruBA84fQo9v99CXTEdUH2");
+
+    const ORACLE_ACCOUNTS: Record<number, string> = {
+        0: "2X3Qp3wDjFVV9mjtvBgCavGruBA84fQo9v99CXTEdUH2",
+        1: "9k5hPcG3hvjz9TneBgzuN89yWXywvx2ZYgkGWhQdxHRM",
+        2: "B2PP4x15qQstEFMR9S6nMci6vFZnkKgh7Hf5qzaRMM5G",
+    };
 
     const [betPda] = PublicKey.findProgramAddressSync(
         [Buffer.from("bet"), creator.publicKey.toBuffer()],
@@ -39,6 +44,11 @@ async function main() {
         [Buffer.from("vault"), creator.publicKey.toBuffer()],
         programId
     );
+
+    const bet = await program.account.bet.fetch(betPda);
+    const city = bet.city as number;
+    const oracleQuote = new PublicKey(ORACLE_ACCOUNTS[city]);
+    console.log("City:", city, "| Oracle:", oracleQuote.toBase58());
 
     const tx = await program.methods
         .settleBet()

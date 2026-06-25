@@ -35,7 +35,7 @@ async function main() {
 
    const tx = await program.methods
     .createBet(
-      0, //mumbai 0, delhi 1 and blr 2
+      2, //mumbai 0, delhi 1 and blr 2
       270, // 30 * 10
       false, // below threshold
       new anchor.BN(Math.floor(Date.now() / 1000) + 60), // deadline

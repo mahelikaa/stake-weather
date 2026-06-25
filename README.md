@@ -20,7 +20,7 @@ Built to learn Switchboard custom oracle feeds on Solana devnet.
 ## Setup
 
 ```bash
-git clone https://github.com/mahelikaa/stake-weather
+git clone https://github.com/mahelikaa/stake-weather.git
 cd stake-weather
 npm install
 cd app
