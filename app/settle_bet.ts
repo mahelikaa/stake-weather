@@ -36,6 +36,8 @@ async function main() {
         2: "B2PP4x15qQstEFMR9S6nMci6vFZnkKgh7Hf5qzaRMM5G",
     };
 
+    const CITY_NAMES: Record<number, string> = { 0: "Mumbai", 1: "Delhi", 2: "Bangalore" };
+
     const [betPda] = PublicKey.findProgramAddressSync(
         [Buffer.from("bet"), creator.publicKey.toBuffer()],
         programId
@@ -48,7 +50,11 @@ async function main() {
     const bet = await program.account.bet.fetch(betPda);
     const city = bet.city as number;
     const oracleQuote = new PublicKey(ORACLE_ACCOUNTS[city]);
-    console.log("City:", city, "| Oracle:", oracleQuote.toBase58());
+
+    const oracleInfo = await connection.getAccountInfo(oracleQuote);
+    console.log(`City: ${CITY_NAMES[city]}`);
+    console.log(`Oracle account: ${oracleQuote.toBase58()}`);
+    console.log(`Oracle owner: ${oracleInfo?.owner.toBase58()}`);
 
     const tx = await program.methods
         .settleBet()
@@ -60,9 +66,16 @@ async function main() {
             oracle: oracleQuote,
             caller: creator.publicKey,
         })
-        .rpc();
+        .rpc({ commitment: "confirmed" });
 
-    console.log("settle_bet tx:", tx);
+    console.log(`settle_bet tx: ${tx}`);
+
+    const txDetails = await program.provider.connection.getTransaction(tx, {
+        commitment: "confirmed",
+        maxSupportedTransactionVersion: 0,
+    });
+    const logs = txDetails?.meta?.logMessages || [];
+    logs.filter(l => l.includes("Program log:")).forEach(l => console.log(l.replace("Program log: ", "")));
 }
 
 main();

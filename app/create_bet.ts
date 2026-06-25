@@ -35,9 +35,9 @@ async function main() {
 
    const tx = await program.methods
     .createBet(
-      2, //mumbai 0, delhi 1 and blr 2
-      270, // 30 * 10
-      false, // below threshold
+      0, //mumbai 0, delhi 1 and blr 2
+      250, // 30 * 10
+      true, // below threshold
       new anchor.BN(Math.floor(Date.now() / 1000) + 60), // deadline
       new anchor.BN(1_000_000) //0.001 sol staked
     )
