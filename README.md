@@ -50,8 +50,8 @@ npx ts-node join_bet.ts
 # 3. Wait for the deadline, then update the feed
 npx ts-node update_feed.ts
 
-# 4. Settle the bet
-npx ts-node settle_bet.ts
+# 4. Wait a few seconds for the feed update to confirm, then settle
+sleep 5 && npx ts-node settle_bet.ts
 
 # Cancel a bet before anyone joins (creator only)
 npx ts-node cancel_bet.ts
