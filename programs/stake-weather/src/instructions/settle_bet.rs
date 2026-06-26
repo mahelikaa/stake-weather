@@ -3,6 +3,8 @@ use crate::error::ErrorCode;
 use crate::state::Bet;
 use anchor_lang::prelude::*;
 
+const SWITCHBOARD_PROGRAM_ID: &str = "orac1eFjzWL5R3RbbdMV68K9H6TaCVVcL6LjvQQWAbz";
+
 #[derive(Accounts)]
 pub struct SettleBet<'info> {
     #[account(
@@ -31,7 +33,7 @@ pub struct SettleBet<'info> {
     #[account(mut)]
     pub challenger: UncheckedAccount<'info>,
 
-    /// CHECK: switchboard oracle quote account
+    /// CHECK: verified below — must be owned by Switchboard program
     pub oracle: UncheckedAccount<'info>,
 
     #[account(mut)]
@@ -49,6 +51,13 @@ pub fn handler(ctx: Context<SettleBet>) -> Result<()> {
     require!(
         clock.unix_timestamp >= bet.deadline,
         ErrorCode::DeadlineNotReached
+    );
+
+    // verify oracle account is owned by Switchboard — prevents fake oracle accounts
+    let switchboard_program_id = SWITCHBOARD_PROGRAM_ID.parse::<Pubkey>().unwrap();
+    require!(
+        ctx.accounts.oracle.owner == &switchboard_program_id,
+        ErrorCode::InvalidFeed
     );
 
     let expected_hash = match bet.city {
@@ -86,14 +95,27 @@ pub fn handler(ctx: Context<SettleBet>) -> Result<()> {
     }
 
     let raw = raw_value.ok_or(ErrorCode::FeedValueMissing)?;
-    // raw is scaled by 1e18; threshold is temp * 10, so divide by 1e17
     let temp = (raw / 100_000_000_000_000_000i128) as i32;
+
+    msg!(
+        "Temperature: {}.{}°C | Threshold: {}.{}°C | Direction: {}",
+        temp / 10,
+        (temp % 10).abs(),
+        bet.threshold / 10,
+        (bet.threshold % 10).abs(),
+        if bet.direction { "above" } else { "below" }
+    );
 
     let creator_wins = if bet.direction {
         temp >= bet.threshold
     } else {
         temp < bet.threshold
     };
+
+    msg!(
+        "Winner: {}",
+        if creator_wins { "creator" } else { "challenger" }
+    );
 
     let vault_lamports = ctx.accounts.vault.lamports();
 
